@@ -14,13 +14,15 @@ namespace eng {
         : m_id(id) {
     }
 
-    glm::mat2 Transform2DComponent::getTransform() {
-        const float s = glm::sin(rotation);
-        const float c = glm::cos(rotation);
-        glm::mat2 rotationMatrix{ { c, s }, { -s, c } };
+    glm::mat4 TransformComponent::getTransform() {
+        glm::mat4 transform = glm::translate({ 1.0f }, translation);
 
-        glm::mat2 scaleMatrix{{ scale.x, 0.0f }, { 0.0f, scale.y }};
+        transform = glm::rotate(transform, rotation.y, { 0.0f, 1.0f, 0.0f });
+        transform = glm::rotate(transform, rotation.x, { 1.0f, 0.0f, 0.0f });
+        transform = glm::rotate(transform, rotation.z, { 0.0f, 0.0f, 1.0f });
 
-        return rotationMatrix * scaleMatrix;
+        transform = glm::scale(transform, scale);
+
+        return transform;
     }
 }

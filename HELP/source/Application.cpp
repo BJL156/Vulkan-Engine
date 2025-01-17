@@ -1,10 +1,8 @@
 #include "Application.h"
 
 namespace eng {
-	struct SimplePushConstantData {
-		glm::mat2 transform{ 1.0f };
-		glm::vec2 offset;
-		alignas(16) glm::vec3 color;
+	struct TransformPushConstantData {
+		glm::mat4 transform{ 1.0f };
 	};
 
 	Application::Application() {
@@ -28,9 +26,47 @@ namespace eng {
 
 	void Application::loadGameObjects() {
 		std::vector<Model::Vertex> vertices{
-			{ {  0.0f, -0.5f }, { 1.0f, 0.0f, 0.0f } },
-			{ {  0.5f,  0.5f }, { 0.0f, 1.0f, 0.0f } },
-			{ { -0.5f,  0.5f }, { 0.0f, 0.0f, 1.0f } }
+			{ { -.5f, -.5f, -.5f }, {.9f, .9f, .9f } },
+			{ { -.5f, .5f, .5f }, {.9f, .9f, .9f } },
+			{ { -.5f, -.5f, .5f }, {.9f, .9f, .9f } },
+			{ { -.5f, -.5f, -.5f }, {.9f, .9f, .9f } },
+			{ { -.5f, .5f, -.5f }, {.9f, .9f, .9f } },
+			{ { -.5f, .5f, .5f }, {.9f, .9f, .9f } },
+
+			{ { .5f, -.5f, -.5f }, {.8f, .8f, .1f } },
+			{ { .5f, .5f, .5f }, {.8f, .8f, .1f } },
+			{ { .5f, -.5f, .5f }, {.8f, .8f, .1f } },
+			{ { .5f, -.5f, -.5f }, {.8f, .8f, .1f } },
+			{ { .5f, .5f, -.5f }, {.8f, .8f, .1f } },
+			{ { .5f, .5f, .5f }, {.8f, .8f, .1f } },
+
+			{ { -.5f, -.5f, -.5f }, {.9f, .6f, .1f } },
+			{ { .5f, -.5f, .5f }, {.9f, .6f, .1f } },
+			{ { -.5f, -.5f, .5f }, {.9f, .6f, .1f } },
+			{ { -.5f, -.5f, -.5f }, {.9f, .6f, .1f } },
+			{ { .5f, -.5f, -.5f }, {.9f, .6f, .1f } },
+			{ { .5f, -.5f, .5f }, {.9f, .6f, .1f } },
+
+			{ { -.5f, .5f, -.5f }, {.8f, .1f, .1f } },
+			{ { .5f, .5f, .5f }, {.8f, .1f, .1f } },
+			{ { -.5f, .5f, .5f }, {.8f, .1f, .1f } },
+			{ { -.5f, .5f, -.5f }, {.8f, .1f, .1f } },
+			{ { .5f, .5f, -.5f }, {.8f, .1f, .1f } },
+			{ { .5f, .5f, .5f }, {.8f, .1f, .1f } },
+
+			{ { -.5f, -.5f, 0.5f }, {.1f, .1f, .8f} },
+			{ { .5f, .5f, 0.5f }, {.1f, .1f, .8f} },
+			{ { -.5f, .5f, 0.5f }, {.1f, .1f, .8f} },
+			{ { -.5f, -.5f, 0.5f }, {.1f, .1f, .8f} },
+			{ { .5f, -.5f, 0.5f }, {.1f, .1f, .8f} },
+			{ { .5f, .5f, 0.5f }, {.1f, .1f, .8f }},
+
+			{ { -.5f, -.5f, -0.5f }, {.1f, .8f, .1f} },
+			{ { .5f, .5f, -0.5f }, {.1f, .8f, .1f} },
+			{ { -.5f, .5f, -0.5f }, {.1f, .8f, .1f} },
+			{ { -.5f, -.5f, -0.5f }, {.1f, .8f, .1f} },
+			{ { .5f, -.5f, -0.5f }, {.1f, .8f, .1f} },
+			{ { .5f, .5f, -0.5f }, {.1f, .8f, .1f }}
 		};
 
 		std::shared_ptr<Model> model = std::make_shared<Model>(m_device, vertices);
@@ -38,18 +74,18 @@ namespace eng {
 		GameObject triangle = GameObject::createGameObject();
 		triangle.model = model;
 		triangle.color = { 0.1f, 0.8f, 0.1f };
-		triangle.transform2D.translation.x = 0.2f;
-		triangle.transform2D.scale = { 2.0f, 0.5f };
-		triangle.transform2D.rotation = 0.25f * glm::two_pi<float>();
+		triangle.transform.translation = { 0.0f, 0.0f, 0.5f };
+		triangle.transform.scale = { 0.5f, 0.5f, 0.5f };
+		triangle.transform.rotation = { 0.0f, 0.0f, 0.0f};
 
 		m_gameObjects.push_back(std::move(triangle));
 	}
 
 	void Application::createPipelineLayout() {
 		VkPushConstantRange pushConstantRange{};
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		pushConstantRange.offset = 0;
-		pushConstantRange.size = sizeof(SimplePushConstantData);
+		pushConstantRange.size = sizeof(TransformPushConstantData);
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -80,20 +116,19 @@ namespace eng {
 		m_pipeline->bind(commandBuffer);
 
 		for (GameObject &gameObject : m_gameObjects) {
-			gameObject.transform2D.rotation = glm::mod(gameObject.transform2D.rotation + 0.001f, glm::two_pi<float>());
+			gameObject.transform.rotation.x = glm::mod(gameObject.transform.rotation.x + 0.001f, glm::two_pi<float>());
+			gameObject.transform.rotation.y = glm::mod(gameObject.transform.rotation.y + 0.001f, glm::two_pi<float>());
 
-			SimplePushConstantData simplePushConstantData;
-			simplePushConstantData.transform = gameObject.transform2D.getTransform();
-			simplePushConstantData.offset = gameObject.transform2D.translation;
-			simplePushConstantData.color = gameObject.color;
+			TransformPushConstantData transformPushConstantData;
+			transformPushConstantData.transform = gameObject.transform.getTransform();
 
 			vkCmdPushConstants(
 				commandBuffer,
 				m_pipelineLayout,
-				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				VK_SHADER_STAGE_VERTEX_BIT,
 				0,
-				sizeof(SimplePushConstantData),
-				&simplePushConstantData
+				sizeof(TransformPushConstantData),
+				&transformPushConstantData
 			);
 
 			gameObject.model->bind(commandBuffer);

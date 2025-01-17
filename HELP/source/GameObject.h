@@ -1,17 +1,22 @@
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Model.h"
 
 #include <memory>
 
 namespace eng {
-	struct Transform2DComponent {
-		glm::vec2 translation = { 0.0f, 0.0f };
-		glm::vec2 scale{ 1.0f, 1.0f };
-		float rotation = 0.0f;
+	struct TransformComponent {
+		glm::vec3 translation = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
+		glm::vec3 rotation{ 0.0f, 0.0f, 0.0f };
 
-		glm::mat2 getTransform();
+		glm::mat4 getTransform();
 	};
 
 	class GameObject {
@@ -27,7 +32,7 @@ namespace eng {
 
 		std::shared_ptr<Model> model{};
 		glm::vec3 color{};
-		Transform2DComponent transform2D{};
+		TransformComponent transform{};
 	private:
 		GameObject(unsigned int id);
 
